@@ -1,5 +1,4 @@
 from models import *
-from keras.utils import to_categorical
 import keras.backend as K
 from sklearn.manifold import TSNE
 import seaborn as sns
