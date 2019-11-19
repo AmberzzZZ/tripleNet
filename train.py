@@ -43,6 +43,8 @@ if __name__ == '__main__':
     val_generator = triplet_generator(x_val, y_val, batch_size, n_classes=n_classes)
 
     model = triple_model(input_shape=(target_size,target_size,1), n_classes=n_classes)
+    model.load_weights('tripleNet_01_val_acc_0.900.h5', by_name=True)
+
 
     filepath = "./tripleNet_{epoch:02d}_val_acc_{dense_2_acc:.3f}.h5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='min')

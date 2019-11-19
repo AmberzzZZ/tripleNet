@@ -7,8 +7,10 @@ if __name__ == '__main__':
     n_classes = 3
     target_size = 28
 
-    model = cls_model(input_shape=(target_size,target_size,1), n_classes=n_classes)
-    model.load_weights('raw_cls_02_val_acc_0.940.h5', by_name=True)
+    # model = cls_model(input_shape=(target_size,target_size,1), n_classes=n_classes)
+    # model.load_weights('raw_cls_02_val_acc_0.940.h5', by_name=True)
+    model = triple_model(input_shape=(target_size,target_size,1), n_classes=n_classes)
+    model.load_weights('tripleNet_01_val_acc_0.971.h5', by_name=True)
 
     cate = [i for i in glob.glob(test_path+"/*") if i[0]!='.']
     print(cate)
@@ -21,7 +23,8 @@ if __name__ == '__main__':
             img = cv2.resize(img, (target_size, target_size))
             tmp = np.reshape(img, (1, target_size, target_size, 1))
 
-            preds = model.predict(tmp)
+            # preds = model.predict(tmp)
+            preds = model.predict([tmp, tmp, tmp])[0]
             print(preds)
 
             label = np.argmax(preds)
