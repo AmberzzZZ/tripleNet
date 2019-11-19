@@ -11,7 +11,8 @@ def loadData(data_path, target_size=224):
     x_train = []
     y_train = []
 
-    for idx, folder in enumerate(os.listdir(data_path)):
+    folderlst = [i for i in os.listdir(data_path) if i[0]!='.']
+    for idx, folder in enumerate(folderlst):
         for file in glob.glob(os.path.join(data_path, folder)+"/*"):
             img = cv2.imread(file, 0)
             img = cv2.resize(img, (target_size, target_size))
@@ -45,42 +46,44 @@ def generate_triplet(x, y, ap_pairs=10, an_pairs=10):
     return np.array(triplet_train_pairs), np.array(triplet_p_n_labels)
 
 
-def triplet_generator(x, y, batch_size):
-    idx = [i for i in range(x.shape[0])]
+def triplet_generator(x, y, batch_size, n_classes=10):
     while 1:
-        random.shuffle(idx)
-        x_shuffle = x[idx]
-        y_shuffle = y[idx]
-
         an_pairs = batch_size // 2
         ap_pairs = batch_size - an_pairs
-        x_train_pairs, y_train_labels = generate_triplet(x_shuffle, y_shuffle, ap_pairs, an_pairs)
+        x_train_pairs, y_train_labels = generate_triplet(x, y, ap_pairs, an_pairs)
         Anchor = np.expand_dims(x_train_pairs[:,0,:], axis=-1)
         Positive = np.expand_dims(x_train_pairs[:,1,:], axis=-1)
         Negative = np.expand_dims(x_train_pairs[:,2,:], axis=-1)
         y_dummy = np.zeros((Anchor.shape[0], 1))
-        y_onehot = to_categorical(y_train_labels[:,0], num_classes=15)
+        y_onehot = to_categorical(y_train_labels[:,0], num_classes=n_classes)
 
         yield [Anchor, Positive, Negative], [y_onehot, y_dummy]
 
 
-def base_generator(x, y, batch_size):
+def base_generator(x, y, batch_size, n_classes=10):
     x = np.expand_dims(x, axis=-1)
     idx = [i for i in range(y.shape[0])]
     while 1:
         random.shuffle(idx)
         x_batch = x[idx][:batch_size]
-        y_batch = x[idx][:batch_size]
-        y_onehot = to_categorical(y_batch, num_classes=15)
+        y_batch = y[idx][:batch_size]
+        y_onehot = to_categorical(y_batch, num_classes=n_classes)
 
-        yield x_batch, y_batch
+        yield x_batch, y_onehot
 
 
 if __name__ == '__main__':
-    data_path = "train/"
+    data_path = "data/train/"
     batch_size = 4
+    n_classes = 3
 
-    x_train, y_train = loadData(data_path, target_size=224)
+    x_train, y_train = loadData(data_path, target_size=28)
+
+    for idx, i in enumerate(triplet_generator(x_train, y_train, batch_size, n_classes)):
+        [Anchor, Positive, Negative], [y_onehot, y_dummy] = i
+        print(y_onehot.shape, y_dummy.shape)
+        if idx > 1:
+            break
 
 
 

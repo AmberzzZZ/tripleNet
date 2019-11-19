@@ -1,4 +1,5 @@
-from keras.layers import GlobalAveragePooling2D, Dense, Input, concatenate, Activation
+from keras.layers import GlobalAveragePooling2D, Dense, Input, concatenate, Activation, \
+                         Conv2D, MaxPooling2D, BatchNormalization, PReLU, Flatten
 from keras.models import Model
 from keras.applications.resnet50 import ResNet50
 from keras.optimizers import SGD, Adam
@@ -19,11 +20,12 @@ def cls_acc(y_true, y_pred):
 
 
 def cls_loss(y_true, y_pred):
+    print("for cls branch, y_pred.shape:  ", y_pred)       # [Batch_dim, num_classes]
     return categorical_crossentropy(y_true, y_pred)
 
 
 def triplet_loss(y_true, y_pred, alpha=0.4):
-    print("y_pred.shape:  ", y_pred)       # [Batch_dim, vec_dim*3]
+    print("for distance branch, y_pred.shape:  ", y_pred)       # [Batch_dim, vec_dim*3]
 
     vec_len = y_pred.shape.as_list()[-1]
 
@@ -39,19 +41,40 @@ def triplet_loss(y_true, y_pred, alpha=0.4):
     return loss
 
 
+def conv_block(filters, kernel_size, x):
+    x = Conv2D(filters,kernel_size)(x)
+    x = BatchNormalization()(x)
+    x = PReLU()(x)
+    x = Conv2D(filters,kernel_size)(x)
+    x = BatchNormalization()(x)
+    x = PReLU()(x)
+
+    return x
+
+
 def base_model(input_shape=(512,512,1)):
     input = Input(shape=input_shape)
-    base_model = ResNet50(include_top=False, weights=None, input_shape=input_shape)
-    x = base_model(input)
-    x = GlobalAveragePooling2D()(x)
+
+    # # resnet50
+    # base_model = ResNet50(include_top=False, weights=None, input_shape=input_shape)
+    # x = base_model(input)
+    # x = GlobalAveragePooling2D()(x)
+    # x = Dense(100, activation='prelu')(x)
+
+    # mnist
+    x = conv_block(32, (3,3), input)
+    x = conv_block(64, (5,5), x)
+    x = conv_block(128, (7,7), x)
+    x = Flatten()(x)
     x = Dense(100)(x)
+    x = PReLU()(x)
 
     model = Model(inputs=input, outputs=x)
 
     return model
 
 
-def cls_model(input_shape=(512,512,1), n_classes=10):
+def cls_model(lr=3e-4, input_shape=(512,512,1), n_classes=10):
     input = Input(shape=input_shape)
     basemodel = base_model(input_shape)
     x = basemodel(input)
@@ -59,9 +82,9 @@ def cls_model(input_shape=(512,512,1), n_classes=10):
 
     model = Model(inputs=input, outputs=x)
 
-    sgd = SGD(lr=3e-4, momentum=0.9, decay=1e-6, nesterov=True)
-    adam = Adam(lr=1e-4, beta_1=0.9, beta_2=0.999)
-    model.compile(optimizer=sgd, loss='categorical_crossentropy', metrics=['acc'])
+    sgd = SGD(lr, momentum=0.9, decay=1e-6, nesterov=True)
+    adam = Adam(lr, beta_1=0.9, beta_2=0.999)
+    model.compile(optimizer=adam, loss=cls_loss, metrics=['acc'])
 
     return model
 
@@ -77,7 +100,7 @@ def triple_model(input_shape=(512,512,1), n_classes=10, multi_gpu=False):
     encoded_negative = sharedCNN(negative_input)
 
     # class branch
-    x = Dense(n_classses, activation='softmax')(encoded_anchor)
+    x = Dense(n_classes, activation='softmax')(encoded_anchor)
 
     # distance branch
     encoded_anchor = Activation('sigmoid')(encoded_anchor)
@@ -91,7 +114,7 @@ def triple_model(input_shape=(512,512,1), n_classes=10, multi_gpu=False):
 
     sgd = SGD(lr=3e-4, momentum=0.9, decay=1e-6, nesterov=True)
     adam = Adam(lr=1e-4, beta_1=0.9, beta_2=0.999)
-    model.compile(optimizer=adam, loss=['categorical_crossentropy', triplet_loss], metrics=['categorical_accuracy'])
+    model.compile(optimizer=adam, loss=[cls_loss, triplet_loss], metrics=['acc'])
 
     return model
 
