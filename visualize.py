@@ -4,7 +4,7 @@ from sklearn.manifold import TSNE
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as PathEffects
-
+from triple_center_model import *
 
 
 def scatter(x, labels, n_classes=10, file_name='scatter.png'):
@@ -57,17 +57,34 @@ if __name__ == '__main__':
     # print(tsne_embeds.shape)      # (N, 2)
     # scatter(tsne_embeds, y_test, n_classes, 'raw_scatter.png')
 
-    # triplet model
-    model = triple_model(input_shape=(target_size,target_size,1), n_classes=n_classes)
-    model.load_weights('tripleNet_01_val_acc_0.971.h5', by_name=True)
-    func = K.function(inputs=[model.inputs[0]], outputs=[model.get_layer('activation_1').output])
+    # # triplet model
+    # model = triple_model(input_shape=(target_size,target_size,1), n_classes=n_classes)
+    # model.load_weights('tripleNet_01_val_acc_0.971.h5', by_name=True)
+    # func = K.function(inputs=[model.inputs[0]], outputs=[model.get_layer('activation_1').output])
+    # y_pred = func([x_test])[0]
+    # print(y_pred.shape)
+    # print("visualizing...")
+    # tsne = TSNE()
+    # tsne_embeds = tsne.fit_transform(y_pred)
+    # print(tsne_embeds.shape)      # (N, 2)
+    # scatter(tsne_embeds, y_test, n_classes, 'tripleNet_scatter.png')
+
+    # triple center model
+
+    model = triple_center_model(input_shape=(target_size,target_size,1), n_classes=n_classes)
+    model.load_weights('triple_center_model_01_val_acc_0.981.h5', by_name=True)
+    func = K.function(inputs=[model.inputs[0]], outputs=[model.get_layer('model_1').get_output_at(-1)])
     y_pred = func([x_test])[0]
     print(y_pred.shape)
     print("visualizing...")
     tsne = TSNE()
     tsne_embeds = tsne.fit_transform(y_pred)
     print(tsne_embeds.shape)      # (N, 2)
-    scatter(tsne_embeds, y_test, n_classes, 'tripleNet_scatter.png')
+    scatter(tsne_embeds, y_test, n_classes, 'triple_center_loss_scatter.png')
+
+
+
+
 
 
 

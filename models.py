@@ -59,7 +59,7 @@ def base_model(input_shape=(512,512,1)):
     # base_model = ResNet50(include_top=False, weights=None, input_shape=input_shape)
     # x = base_model(input)
     # x = GlobalAveragePooling2D()(x)
-    # x = Dense(100, activation='prelu')(x)
+    # x = Dense(100, activation='relu')(x)
 
     # mnist
     x = conv_block(32, (3,3), input)
