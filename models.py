@@ -52,7 +52,7 @@ def conv_block(filters, kernel_size, x):
     return x
 
 
-def base_model(input_shape=(512,512,1)):
+def base_model(input_shape=(512,512,1), activation=None):
     input = Input(shape=input_shape)
 
     # # resnet50
@@ -67,7 +67,10 @@ def base_model(input_shape=(512,512,1)):
     x = conv_block(128, (7,7), x)
     x = Flatten()(x)
     x = Dense(100)(x)
-    x = PReLU()(x)
+    if activation:
+        x = Activation(activation)(x)
+    else:
+        x = PReLU()(x)
 
     model = Model(inputs=input, outputs=x)
 

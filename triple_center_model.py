@@ -70,6 +70,39 @@ def triple_center_model(lr=3e-4, input_shape=(512,512,1), n_classes=10, m=4):
     return model
 
 
+def lossless_tcl_model(lr=3e-4, input_shape=(512,512,1), n_classes=10):
+    x_input = Input(shape=input_shape)
+    basemodel = base_model(input_shape, activation='sigmoid')
+    embedding = basemodel(x_input)               # (None,100)
+
+    # cls branch
+    softmax = Dense(n_classes, activation='softmax')(embedding)      # dense3
+
+    # center branch
+    embedding_size = embedding.shape.as_list()[-1]        # 100: the outdim of dense1
+    y_input = Input((1,))
+    labels = np.arange(n_classes).reshape([-1,1])
+    y_standard_input = Input(tensor=K.constant(labels))      # (10,1)  assume n_classes=10
+    center_standard = sharedEmbedding(n_classes, embedding_size, y_standard_input)   # (10, 1, 100)
+
+    intra_distance, min_inter_distance = Lambda(l2distance, arguments={'n_classes': n_classes},
+                                    name='l2distance')([embedding, center_standard, y_input])
+
+    triplet_center_loss = Lambda(lambda x: K.maximum(x[0]+embedding_size-x[1],0),
+                        name='triple_center_loss')([intra_distance, min_inter_distance])
+
+    model = Model(inputs=[x_input, y_input, y_standard_input], outputs=[softmax, triplet_center_loss])
+
+    sgd = SGD(lr, momentum=0.9, decay=1e-6, nesterov=True)
+    adam = Adam(lr, beta_1=0.9, beta_2=0.999)
+    model.compile(optimizer=adam,
+                  loss=['categorical_crossentropy', TCL],
+                  loss_weights=[1, 0.3],
+                  metrics=['acc'])   # loss_weights
+
+    return model
+
+
 if __name__ == '__main__':
 
     train_path = "data/train/"

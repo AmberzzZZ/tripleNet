@@ -12,8 +12,10 @@ if __name__ == '__main__':
     # model.load_weights('raw_cls_04_val_acc_1.000.h5', by_name=True)
     # model = triple_model(input_shape=(target_size,target_size,1), n_classes=n_classes)
     # model.load_weights('tripleNet_01_val_acc_0.971.h5', by_name=True)
-    model = triple_center_model(input_shape=(target_size,target_size,1), n_classes=n_classes)
-    model.load_weights('triple_center_model_01_val_acc_0.981.h5', by_name=True)
+    # model = triple_center_model(input_shape=(target_size,target_size,1), n_classes=n_classes)
+    # model.load_weights('triple_center_model_01_val_acc_0.981.h5', by_name=True)
+    model = lossless_tcl_model(input_shape=(target_size,target_size,1), n_classes=n_classes)
+    model.load_weights('lossless_tcl_model_02_val_acc_0.995.h5', by_name=True)
 
     cate = [i for i in glob.glob(test_path+"/*") if i[0]!='.']
     print(cate)
