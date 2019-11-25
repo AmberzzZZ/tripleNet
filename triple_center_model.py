@@ -27,6 +27,16 @@ def l2distance(args, n_classes):
     intra_distances = tf.where(tf.equal(mask, 1.0), distances, np.inf*tf.ones_like(mask))
     intra_distance = tf.math.reduce_min(intra_distances, axis=1, keepdims=True)
 
+#     intra_distance, min_inter_distance = args
+#     intra_distance = tf.Print(intra_distance,
+#                                     [K.max(intra_distance)],
+#                                     message='max_intra_distance: ',
+#                                     summarize=10)
+    min_inter_distance = tf.Print(min_inter_distance,
+                                        [K.max(distances), K.min(distances)],
+                                        message='distance: ',
+                                        summarize=10)
+
     return [intra_distance, min_inter_distance]
 
 
@@ -70,6 +80,24 @@ def triple_center_model(lr=3e-4, input_shape=(512,512,1), n_classes=10, m=4):
     return model
 
 
+def debug(args):
+    embedding = args
+    embedding = tf.Print(embedding, [K.max(embedding), K.min(embedding)])
+
+    return embedding
+
+
+def debug_unlinear_loss(args, beta):
+    intra_distance, min_inter_distance = args
+    epsilon = 1e-7
+    l1 = -K.log(-(intra_distance)/beta+1+epsilon)
+    l2 = -K.log(-(beta-min_inter_distance)/beta+1+epsilon)
+    l1 = tf.Print(l1, [l1], message='l1 debug info: ', summarize=5)
+    l2 = tf.Print(l2, [l2], message='l2 debug info: ', summarize=5)
+
+    return l1+l2
+
+
 def lossless_tcl_model(lr=3e-4, input_shape=(512,512,1), n_classes=10):
     x_input = Input(shape=input_shape)
     basemodel = base_model(input_shape, activation='sigmoid')
@@ -84,20 +112,30 @@ def lossless_tcl_model(lr=3e-4, input_shape=(512,512,1), n_classes=10):
     labels = np.arange(n_classes).reshape([-1,1])
     y_standard_input = Input(tensor=K.constant(labels))      # (10,1)  assume n_classes=10
     center_standard = sharedEmbedding(n_classes, embedding_size, y_standard_input)   # (10, 1, 100)
+    center_standard = Activation('sigmoid')(center_standard)
 
     intra_distance, min_inter_distance = Lambda(l2distance, arguments={'n_classes': n_classes},
                                     name='l2distance')([embedding, center_standard, y_input])
+    # intra_distance, min_inter_distance = Lambda(debug)([intra_distance, min_inter_distance])
+    # raw
+    lossless_tcl_loss = Lambda(lambda x: K.maximum(x[0]+embedding_size-x[1],0),
+                        name='lossless_loss')([intra_distance, min_inter_distance])
+    # unlinear
+    beta = embedding_size
+    unlinear_loss = Lambda(lambda x: -K.log(-(x[0])/beta+1+K.epsilon())-K.log(-(beta-x[1])/beta+1+K.epsilon()),
+                    name='unlinear_loss')([intra_distance, min_inter_distance])
+    # unlinear_loss = Lambda(debug_unlinear_loss, arguments={'beta': beta})([intra_distance, min_inter_distance])
 
-    triplet_center_loss = Lambda(lambda x: K.maximum(x[0]+embedding_size-x[1],0),
-                        name='triple_center_loss')([intra_distance, min_inter_distance])
 
-    model = Model(inputs=[x_input, y_input, y_standard_input], outputs=[softmax, triplet_center_loss])
+    model = Model(inputs=[x_input, y_input, y_standard_input], outputs=[softmax, unlinear_loss])
+    plot_model(model, to_file='lossless_tcl_model.png', show_shapes=True, show_layer_names=True)
+
 
     sgd = SGD(lr, momentum=0.9, decay=1e-6, nesterov=True)
     adam = Adam(lr, beta_1=0.9, beta_2=0.999)
     model.compile(optimizer=adam,
                   loss=['categorical_crossentropy', TCL],
-                  loss_weights=[1, 0.3],
+                  loss_weights=[1, 3],
                   metrics=['acc'])   # loss_weights
 
     return model

@@ -38,7 +38,7 @@ def scatter(x, labels, n_classes=10, file_name='scatter.png'):
 
 if __name__ == '__main__':
 
-    test_path = "data/test/"
+    test_path = "data/train/"
     target_size = 28
     n_classes = 3
 
@@ -83,7 +83,7 @@ if __name__ == '__main__':
 
     # lossless tcl model
     model = lossless_tcl_model(input_shape=(target_size,target_size,1), n_classes=n_classes)
-    model.load_weights('lossless_tcl_model_02_val_acc_0.995.h5', by_name=True)
+    model.load_weights('weights/unlinear_model_05_val_acc_0.997.h5', by_name=True)
     func = K.function(inputs=[model.inputs[0]], outputs=[model.get_layer('model_1').get_output_at(-1)])
     y_pred = func([x_test])[0]
     print(y_pred.shape)
@@ -91,7 +91,8 @@ if __name__ == '__main__':
     tsne = TSNE()
     tsne_embeds = tsne.fit_transform(y_pred)
     print(tsne_embeds.shape)      # (N, 2)
-    scatter(tsne_embeds, y_test, n_classes, 'lossless_tcl_scatter.png')
+    n_classes = len([i for i in os.listdir(test_path) if i[0]!='.'])
+    scatter(tsne_embeds, y_test, n_classes, 'unlinear_scatter.png')
 
 
 

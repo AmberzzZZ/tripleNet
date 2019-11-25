@@ -63,10 +63,10 @@ if __name__ == '__main__':
 
     # x_train, y_train = loadData(train_path, target_size)
     # x_train = np.expand_dims(x_train, axis=-1)
-    # y_train = to_categorical(y_train, num_classes=n_classes)
+    # y_train_onehot = to_categorical(y_train, num_classes=n_classes)
     # x_val, y_val = loadData(val_path, target_size)
     # x_val = np.expand_dims(x_val, axis=-1)
-    # y_val = to_categorical(y_val, num_classes=n_classes)
+    # y_val_onehot = to_categorical(y_val, num_classes=n_classes)
 
     # model = triple_center_model(lr=3e-4, input_shape=(target_size,target_size,1), n_classes=n_classes)
 
@@ -76,12 +76,12 @@ if __name__ == '__main__':
     # y_dummy = np.zeros((x_train.shape[0], 1))
     # y_dummy_val = np.zeros((x_val.shape[0], 1))
 
-    # model.fit(x=[x_train, y_dummy],
-    #           y=[y_train, y_dummy],
+    # model.fit(x=[x_train, y_train],
+    #           y=[y_train_onehot, y_dummy],
     #           batch_size=batch_size,
     #           epochs=100, verbose=1,
     #           callbacks=[checkpoint],
-    #           validation_data=([x_val, y_dummy_val], [y_val, y_dummy_val]))
+    #           validation_data=([x_val, y_val], [y_val_onehot, y_dummy_val]))
 
 
 
@@ -90,26 +90,26 @@ if __name__ == '__main__':
 
     x_train, y_train = loadData(train_path, target_size)
     x_train = np.expand_dims(x_train, axis=-1)
-    y_train = to_categorical(y_train, num_classes=n_classes)
+    y_train_onehot = to_categorical(y_train, num_classes=n_classes)
     x_val, y_val = loadData(val_path, target_size)
     x_val = np.expand_dims(x_val, axis=-1)
-    y_val = to_categorical(y_val, num_classes=n_classes)
+    y_val_onehot = to_categorical(y_val, num_classes=n_classes)
 
-    model = lossless_tcl_model(lr=3e-3, input_shape=(target_size,target_size,1), n_classes=n_classes)
-    model.load_weights("lossless_tcl_model_01_val_acc_0.861.h5", by_name=True)
+    model = lossless_tcl_model(lr=3e-2, input_shape=(target_size,target_size,1), n_classes=n_classes)
+    model.load_weights("unlinear_model_01_val_acc_0.967.h5", by_name=True)
 
-    filepath = "./lossless_tcl_model_{epoch:02d}_val_acc_{dense_2_acc:.3f}.h5"
+    filepath = "./unlinear_model_{epoch:02d}_val_acc_{dense_2_acc:.3f}.h5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
 
     y_dummy = np.zeros((x_train.shape[0], 1))
     y_dummy_val = np.zeros((x_val.shape[0], 1))
 
-    model.fit(x=[x_train, y_dummy],
-              y=[y_train, y_dummy],
+    model.fit(x=[x_train, y_train],
+              y=[y_train_onehot, y_dummy],
               batch_size=batch_size,
               epochs=100, verbose=1,
               callbacks=[checkpoint],
-              validation_data=([x_val, y_dummy_val], [y_val, y_dummy_val]))
+              validation_data=([x_val, y_val], [y_val_onehot, y_dummy_val]))
 
 
 

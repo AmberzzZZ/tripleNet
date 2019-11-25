@@ -7,11 +7,14 @@ import itertools
 from keras.utils import to_categorical
 
 
-def loadData(data_path, target_size=224):
+def loadData(data_path, target_size=224, folder=None):
     x_train = []
     y_train = []
 
-    folderlst = [i for i in os.listdir(data_path) if i[0]!='.']
+    if folder:
+        folderlst = [folder]
+    else:
+        folderlst = [i for i in os.listdir(data_path) if i[0]!='.']
     for idx, folder in enumerate(folderlst):
         for file in glob.glob(os.path.join(data_path, folder)+"/*"):
             img = cv2.imread(file, 0)

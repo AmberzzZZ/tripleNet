@@ -20,9 +20,14 @@
 ## 新加入lossless TCL model:
     也是针对triple center loss太容易变成0这个问题，这样l2loss始终大于0
     lossless tcl可视化的结果有点诡异，二维scatter呈现线形，在x光片数据上也是这样的，目前没想到怎么解释。
+    一个猜测：我们对embedding做sigmoid norm的时候，相当于把embedding限定到一个hypertube上，本质上影响了数据分布
 
 ## loss_weights:
     loss_weights affects conversion
+    log loss also affects conversion
+
+## todo:
+    验证噪声样本在这几个模型上的分布
 
 
 
