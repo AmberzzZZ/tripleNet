@@ -95,8 +95,8 @@ if __name__ == '__main__':
     x_val = np.expand_dims(x_val, axis=-1)
     y_val_onehot = to_categorical(y_val, num_classes=n_classes)
 
-    model = lossless_tcl_model(lr=3e-2, input_shape=(target_size,target_size,1), n_classes=n_classes)
-    model.load_weights("unlinear_model_01_val_acc_0.967.h5", by_name=True)
+    model = lossless_tcl_model(lr=3e-3, input_shape=(target_size,target_size,1), n_classes=n_classes)
+    # model.load_weights("unlinear_model_01_val_acc_0.967.h5", by_name=True)
 
     filepath = "./unlinear_model_{epoch:02d}_val_acc_{dense_2_acc:.3f}.h5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='min')

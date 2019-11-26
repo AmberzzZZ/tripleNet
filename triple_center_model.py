@@ -27,15 +27,14 @@ def l2distance(args, n_classes):
     intra_distances = tf.where(tf.equal(mask, 1.0), distances, np.inf*tf.ones_like(mask))
     intra_distance = tf.math.reduce_min(intra_distances, axis=1, keepdims=True)
 
-#     intra_distance, min_inter_distance = args
-#     intra_distance = tf.Print(intra_distance,
-#                                     [K.max(intra_distance)],
-#                                     message='max_intra_distance: ',
-#                                     summarize=10)
-    min_inter_distance = tf.Print(min_inter_distance,
-                                        [K.max(distances), K.min(distances)],
-                                        message='distance: ',
-                                        summarize=10)
+    # intra_distance = tf.Print(intra_distance,
+    #                             [center_standard],
+    #                             message='center_standard: ',
+    #                             summarize=300)
+    # min_inter_distance = tf.Print(min_inter_distance,
+    #                                     [min_inter_distance],
+    #                                     message='inter distance: ',
+    #                                     summarize=2)
 
     return [intra_distance, min_inter_distance]
 
@@ -126,16 +125,13 @@ def lossless_tcl_model(lr=3e-4, input_shape=(512,512,1), n_classes=10):
                     name='unlinear_loss')([intra_distance, min_inter_distance])
     # unlinear_loss = Lambda(debug_unlinear_loss, arguments={'beta': beta})([intra_distance, min_inter_distance])
 
-
     model = Model(inputs=[x_input, y_input, y_standard_input], outputs=[softmax, unlinear_loss])
-    plot_model(model, to_file='lossless_tcl_model.png', show_shapes=True, show_layer_names=True)
-
 
     sgd = SGD(lr, momentum=0.9, decay=1e-6, nesterov=True)
     adam = Adam(lr, beta_1=0.9, beta_2=0.999)
     model.compile(optimizer=adam,
                   loss=['categorical_crossentropy', TCL],
-                  loss_weights=[1, 3],
+                  # loss_weights=[1, 3],s
                   metrics=['acc'])   # loss_weights
 
     return model

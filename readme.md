@@ -19,15 +19,28 @@
 
 ## 新加入lossless TCL model:
     也是针对triple center loss太容易变成0这个问题，这样l2loss始终大于0
+    这个模型cls branch快速收敛，lossless tcl loss收敛比较慢，尝试tf.Print一些中间变量（distances）
     lossless tcl可视化的结果有点诡异，二维scatter呈现线形，在x光片数据上也是这样的，目前没想到怎么解释。
-    一个猜测：我们对embedding做sigmoid norm的时候，相当于把embedding限定到一个hypertube上，本质上影响了数据分布
+    一个猜测：我们对embedding做sigmoid norm的时候，相当于把embedding限定到一个hypertube上一个点，高维点-->低维线？？
 
 ## loss_weights:
     loss_weights affects conversion
     log loss also affects conversion
 
+## done:
+    验证噪声样本在这几个模型上的分布，单独的metric learning不足以generalizing new samples
+    高维分布和低维分布之间没有直接可解释的关系，
+    噪声样本分布在训练样本之间，没有隔离开
+    将噪声样本加入训练是比较有效的抗干扰方法
+
 ## todo:
-    验证噪声样本在这几个模型上的分布
+    关于noisy samples：
+    1. added with random labels
+    2. added with all-negative labels & sigmoid
+
+
+    
+
 
 
 
